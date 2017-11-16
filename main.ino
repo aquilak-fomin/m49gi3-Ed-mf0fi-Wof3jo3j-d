@@ -9,8 +9,8 @@
 #define buzzer 4
 LiquidCrystal lcd(13,12,11,10,9,8);
 
-unsigned long long timeNow,startTime,startDate;
-unsigned int seconds=0,minutes=0,hours=0,days=1,months=1,years=2015,almSec=0,almMin=0,almHr=0,leapYear,alSec,alMin,alHrs;
+//unsigned long long timeNow,startTime,startDate;
+int seconds=0,minutes=0,hours=0,days=1,months=1,years=2015,almSec=0,almMin=0,almHr=0,leapYear,alSec,alMin,alHrs;
 char row1, row2, empty="                ";
 //char row1[],row2[];
 
@@ -29,7 +29,12 @@ void control(int code){
   lcd.setCursor(0,0);
   code==1?lcd.print("Set alarm:"):lcd.print("Set time:");
   lcd.setCursor(0,1);
-  lcd.print(String(hours)+String(minutes)+String(seconds));
+  switch(code){
+    case 1:lcd.print((almHr<10?'0'+String(almHr):String(almHr))+':'+(almMin<10?'0'+String(almMin):String(almMin))+':'+
+                              (almSec<10?'0'+String(almSec):String(almSec)));break;      
+    case 2:lcd.print((hours<10?'0'+String(hours):String(hours))+':'+(minutes<10?'0'+String(minutes):String(minutes))+':'+
+                              (seconds<10?'0'+String(seconds):String(seconds)));break;
+  }
   while(!digitalRead(b4)){
     if (digitalRead(b1))
     {
@@ -53,14 +58,14 @@ void control(int code){
         hours=0;
     }
     if(digitalRead(b1)||digitalRead(b2)||digitalRead(b3)){
-      wait(200);
       lcd.setCursor(0,1);
-      lcd.print(hours<10?'0'+String(hours):String(hours)+':'+minutes<10?'0'+String(minutes):String(minutes)+':'+seconds<10?'0'+String(seconds):String(seconds));
-//      lcd.print(hours);
-//      lcd.setCursor(3,1);
-//      lcd.print(minutes);
-//      lcd.setCursor(6,1);
-//      lcd.print(seconds);
+      switch(code){
+      case 1:lcd.print((almHr<10?'0'+String(almHr):String(almHr))+':'+(almMin<10?'0'+String(almMin):String(almMin))+':'+
+                              (almSec<10?'0'+String(almSec):String(almSec)));break;      
+      case 2:lcd.print((hours<10?'0'+String(hours):String(hours))+':'+(minutes<10?'0'+String(minutes):String(minutes))+':'+
+                              (seconds<10?'0'+String(seconds):String(seconds)));break;
+      }
+      wait(200);
     }
   }
 }
@@ -82,7 +87,7 @@ void changeDate(int code){
       }
     }
     lcd.setCursor(2,1);
-    lcd.print(days<10?"0"+char(days):char(days)+"/"+months<10?"0"+char(months):char(months)+"/"+char(days-2000));
+    lcd.print((days<10?'0'+String(days):String(days))+'/'+(months<10?'0'+String(months):String(months))+'/'+String(years-2000));
     lcd.setCursor(10,1);
     switch((7000+days+(years-(14-months)/12)+int((years-(14-months)/12)/4)-(years-(14-months)/12)/100+(years-(14-months)/12)/400+(31*months+12*((14-months)/12)-2)/12)%7){
       case 1: lcd.print("MON");break;
@@ -160,7 +165,7 @@ void changeDate(int code){
     int daysInThisYear=0;
     for(int i=1;i!=months;i++)
       daysInThisYear+=28+(i+int(i/8))%2+2%i+2*int(1/i);
-    startDate=(days+daysInThisYear+365*(years-2015)+leapYear)*86400;
+    //startDate=(days+daysInThisYear+365*(years-2015)+leapYear)*86400;
   }
 }
 
@@ -178,7 +183,7 @@ void setup() {
 }
 
 void loop() {
-  timeNow=startTime+startDate+millis()/1000;
+  //timeNow=startTime+startDate+millis()/1000;
   if(!millis()%1000){
     seconds++;
     if(seconds>59){
@@ -194,10 +199,10 @@ void loop() {
       }
     }
     lcd.setCursor(4,0);
-    lcd.print(hours<10?'0'+char(hours):char(hours)+':'+minutes<10?'0'+char(minutes):char(minutes)+':'+seconds<10?'0'+char(seconds):char(seconds));
+    lcd.print((hours<10?'0'+String(hours):String(hours))+':'+(minutes<10?'0'+String(minutes):String(minutes))+':'+
+                              (seconds<10?'0'+String(seconds):String(seconds)));
     if(seconds==alSec&&minutes==alMin&&hours==alHrs)
       alarm();
-    lcd.print("Motion detected!");
   }
 
 //  Serial.print("\n");
