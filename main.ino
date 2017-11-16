@@ -1,13 +1,13 @@
 #include <LiquidCrystal.h>
-#define motion1 12
-#define motion2 13
-#define b1 0
-#define b2 1
-#define b3 2
-#define b4 3
-#define alarmOn 10//motor or led
-#define buzzer 11
-LiquidCrystal lcd(9,8,7,6,5,4);
+#define motion1 6
+#define motion2 7
+#define b1 2
+#define b2 3
+#define b3 4
+#define b4 5
+#define alarmOn 5//motor or led
+#define buzzer 4
+LiquidCrystal lcd(13,12,11,10,9,8);
 
 unsigned long long timeNow,startTime,startDate;
 unsigned int seconds=0,minutes=0,hours=0,days=1,months=1,years=2015,almSec=0,almMin=0,almHr=0,leapYear,alSec,alMin,alHrs;
@@ -17,7 +17,7 @@ char row1, row2, empty="                ";
 //LCD brightness
 void wait(int milsec){
   unsigned long long stopTime=millis()+milsec;
-  while(stopTime<millis())
+  while(stopTime>millis())
   {}
 }
 
@@ -26,32 +26,41 @@ void alarm(){
 }
 
 void control(int code){
-  while(b4!=HIGH){
-    if (b1==HIGH)
+  lcd.setCursor(0,0);
+  code==1?lcd.print("Set alarm:"):lcd.print("Set time:");
+  lcd.setCursor(0,1);
+  lcd.print(String(hours)+String(minutes)+String(seconds));
+  while(!digitalRead(b4)){
+    if (digitalRead(b1))
     {
-      wait(100);
-      lcd.clear();
-      lcd.setCursor(0,1);
       switch(code){
         case 1:almSec+=1;if(almSec==60)almSec=0;break;
         case 2:seconds+=1;if(seconds==60)seconds=0;break;
       }
     }
-    if (b2==HIGH)
+    if (digitalRead(b2))
     {
-      wait(100);
       minutes+=1;
       if (minutes==60){
         minutes=0;
         hours+=1;
       }
     }
-    if (b3==HIGH)
+    if (digitalRead(b3))
     {
-      wait(100);
       hours+=1;
       if (hours==24)
         hours=0;
+    }
+    if(digitalRead(b1)||digitalRead(b2)||digitalRead(b3)){
+      wait(200);
+      lcd.setCursor(0,1);
+      lcd.print(hours<10?'0'+String(hours):String(hours)+':'+minutes<10?'0'+String(minutes):String(minutes)+':'+seconds<10?'0'+String(seconds):String(seconds));
+//      lcd.print(hours);
+//      lcd.setCursor(3,1);
+//      lcd.print(minutes);
+//      lcd.setCursor(6,1);
+//      lcd.print(seconds);
     }
   }
 }
@@ -90,22 +99,26 @@ void changeDate(int code){
     lcd.print("Set year:");    
     lcd.setCursor(0,1);
     lcd.print(years);
-    while(b4!=HIGH)
-      if(b1==HIGH || b2==HIGH){
-        b1==HIGH?years+=1:years-=1;
+    while(!digitalRead(b4))
+      if(digitalRead(b1) || digitalRead(b2)){
+        !digitalRead(b1)?years+=1:years-=1;
+        wait(200);
         lcd.clear();
         lcd.setCursor(0,0);
         lcd.print("Set year:");
         lcd.setCursor(0,1);
         lcd.print(years);
       }
-    wait(100);
+    wait(500);
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Set month:");
-    while(b4!=HIGH)
-      if(b1==HIGH || b2==HIGH){
-        b1==HIGH?months+=1:months-=1;
+    lcd.setCursor(0,1);
+    lcd.print(months);
+    while(!digitalRead(b4))
+      if(digitalRead(b1) || digitalRead(b2)){
+        !digitalRead(b1)?months+=1:months-=1;
+        wait(200);
         if(months==13)
           months=1;
         if(months==-1)
@@ -116,20 +129,23 @@ void changeDate(int code){
         lcd.setCursor(0,1);
         lcd.print(months);
       }
-    wait(100);
+    wait(500);
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Set day:");
+    lcd.setCursor(0,1);
+    lcd.print(days);
     if(!(months==2&&!(!years%400||(!years%4&&years%100))))
       daysInMonth=28+(months+int(months/8))%2+2%months+2*int(1/months);
     else
       daysInMonth=29;
-    while(b4!=HIGH)
-      if(b1==HIGH || b2==HIGH){
-        b1==HIGH?days+=1:days-=1;        
+    while(!digitalRead(b4))
+      if(digitalRead(b1) || digitalRead(b2)){
+        !digitalRead(b1)?days+=1:days-=1;
+        wait(200);
         if(days==daysInMonth+1)
           days=1;
-        if(days==-1)
+        if(days==0)
           days=daysInMonth;
         lcd.clear();
         lcd.setCursor(0,0);
@@ -179,8 +195,6 @@ void loop() {
     }
     lcd.setCursor(4,0);
     lcd.print(hours<10?'0'+char(hours):char(hours)+':'+minutes<10?'0'+char(minutes):char(minutes)+':'+seconds<10?'0'+char(seconds):char(seconds));
-    if(seconds==0&&minutes==0&&hours==0)
-      changeDate(1);
     if(seconds==alSec&&minutes==alMin&&hours==alHrs)
       alarm();
     lcd.print("Motion detected!");
